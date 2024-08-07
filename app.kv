@@ -1,0 +1,60 @@
+BoxLayout:
+    orientation: 'horizontal'
+
+    BoxLayout:
+        orientation: 'vertical'
+        size_hint_x: 0.4
+
+        Spinner:
+            id: spinner_sort
+            text: 'Sort by...'
+            values: ['Title', 'Author', 'Completed', 'Pages']
+            on_text: app.sort_books(self.text)
+
+        TextInput:
+            id: title_input
+            hint_text: 'Title'
+
+        TextInput:
+            id: author_input
+            hint_text: 'Author'
+
+        TextInput:
+            id: pages_input
+            hint_text: 'Pages'
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: '40dp'
+
+            Button:
+                text: 'Add Book'
+                on_press: app.add_book()
+
+            Button:
+                text: 'Clear'
+                on_press: app.clear_inputs()
+
+    BoxLayout:
+        orientation: 'vertical'
+        size_hint_x: 0.6
+
+        Label:
+            id: status_label
+            text: 'Pages still to read:'
+
+        ScrollView:
+            GridLayout:
+                id: books_layout
+                cols: 1
+                size_hint_y: None
+                height: self.minimum_height
+
+        Label:
+            id: message_label
+            text: 'Welcome to the Book Collection App'
+'
+
+
+
