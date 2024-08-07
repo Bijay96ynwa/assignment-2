@@ -25,3 +25,12 @@ class BookCollection:
             books_data = json.load(file)
             self.books = [Book(**data) for data in books_data]
 
+    def save_books(self, filename):
+
+        with open(filename, "w")as file:
+            json.dump({book.__dict__ for book in self.books], file)
+
+     def sort(self, key):
+         """Sort the books by the given key and title."""
+         self.books.sort(key=lambda book: (getattr(book, key), book.title))
+
