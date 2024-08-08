@@ -1,0 +1,14 @@
+[
+    {
+        "title": "The Great Gatsby",
+        "author": "F. Scott Fitzgerald",
+        "pages": 180,
+        "status": "u"
+    },
+    {
+        "title": "1984",
+        "author": "George Orwell",
+        "pages": 328,
+        "status": "C"
+    }
+]

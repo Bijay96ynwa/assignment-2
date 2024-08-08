@@ -1,85 +1,113 @@
 from kivy.app import App
-from kivy.lang import Builder
+from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
-from kivy.properties import StringProperty
-from book import Book
-from bookcollection import BookCollection
-
+from kivy.uix.label import Label
+from kivy.uix.textinput import TextInput
+from kivy.uix.spinner import Spinner
+from kivy.uix.popup import Popup
+from kivy.uix.gridlayout import GridLayout
+from book import Book, BookCollection
+import json
 
 class BookApp(App):
-     """Kivy App for managing books"""
+    def build(self):
+        self.title = "Book Manager"
+        self.book_collection = BookCollection()
+        self.book_collection.load_books('books.json')
 
-     status_text= StringProperty()
-     book_collection=BookCollection()
+        self.main_layout = BoxLayout(orientation='horizontal')
+        self.left_layout = BoxLayout(orientation='vertical', size_hint=(0.3, 1))
+        self.right_layout = BoxLayout(orientation='vertical', size_hint=(0.7, 1))
 
-     def build(self):
+        self.spinner = Spinner(
+            text='Sort by Author',
+            values=('author', 'title'),
+            size_hint=(1, 0.1)
+        )
+        self.spinner.bind(text=self.sort_books)
+        self.left_layout.add_widget(self.spinner)
 
-         self.title="Book Collection"
-         self.root =Builder.load_file("app.kv")
-         self.book_collection.load_books("books.json")
-         self.create_book_buttons()
-         return self.root
+        self.title_input = TextInput(hint_text='Title', size_hint=(1, 0.1))
+        self.author_input = TextInput(hint_text='Author', size_hint=(1, 0.1))
+        self.pages_input = TextInput(hint_text='Number of pages', size_hint=(1, 0.1))
+        self.add_button = Button(text='Add Book', size_hint=(1, 0.1))
+        self.add_button.bind(on_press=self.add_book)
 
-     def create_book_buttons(self):
-         """create buttons for each bok in the collection"""
-         self.root.ids.books_box.clear_widgets()
-         for book in self.book_collection.books:
-             button = Button(text=str(book))
-             button.bind(on_release=self.press_entry)
-             button.background_color = (0, 1, 0, 1) if book.is_completed else (1, 0, 0, 1)
-             self.root.ids.books_box.add_widget(button)
-         self.update_status()
+        self.left_layout.add_widget(self.title_input)
+        self.left_layout.add_widget(self.author_input)
+        self.left_layout.add_widget(self.pages_input)
+        self.left_layout.add_widget(self.add_button)
 
-     def press_entry(self, instance):
-         """Handle pressing a book button."""
-         title = instance.text.split(" by ")[0]
-         for book in self.book_collection.books:
-             if book.title == title:
-                 if book.is_completed:
-                     book.mark_required()
-                 else:
-                     book.mark_completed()
-                 instance.background_color = (0, 1, 0, 1) if book.is_completed else (1, 0, 0, 1)
-                 self.update_status()
-                 break
+        self.status_label = Label(text='Number of pages to read:', size_hint=(1, 0.1))
+        self.right_layout.add_widget(self.status_label)
 
-     def handle_add(self):
-         """Handle adding a new book."""
-         title = self.root.ids.input_title.text
-         author = self.root.ids.input_author.text
-         pages = self.root.ids.input_pages.text
+        self.main_layout.add_widget(self.left_layout)
+        self.main_layout.add_widget(self.right_layout)
+        self.update_books_display()
 
-         if not title or not author or not pages:
-             self.status_text = "Please complete all fields."
-             return
+        return self.main_layout
 
-         try:
-             pages = int(pages)
-             if pages <= 0:
-                 self.status_text = "The book must have some pages!"
-                 return
-         except ValueError:
-             self.status_text = "Please enter a valid number."
-             return
+    def sort_books(self, spinner, text):
+        self.book_collection.sort_books(text)
+        self.update_books_display()
 
-         new_book = Book(title, author, pages)
-         self.book_collection.add_book(new_book)
-         self.root.ids.input_title.text = ""
-         self.root.ids.input_author.text = ""
-         self.root.ids.input_pages.text = ""
-         self.create_book_buttons()
-         self.status_text = f"Book '{title}' added."
+    def update_books_display(self):
+        self.right_layout.clear_widgets()
+        self.right_layout.add_widget(self.status_label)
+        self.book_buttons = []
+        for i, book in enumerate(self.book_collection.books):
+            button = Button(text=str(book), size_hint=(1, None), height=40)
+            button.bind(on_press=self.toggle_book_status)
+            self.right_layout.add_widget(button)
+            self.book_buttons.append(button)
 
-     def update_status(self):
-         """Update the status labels."""
-         unread_pages = self.book_collection.get_number_of_unread_pages()
-         self.root.ids.status_label.text = f"Pages to read: {unread_pages}"
+        unread_pages = self.book_collection.get_number_of_unread_pages()
+        unread_count = sum(1 for book in self.book_collection.books if book.status == 'u')
+        self.status_label.text = f"You still need to read {unread_pages} pages in {unread_count} books."
 
-     def on_stop(self):
-         """Save books when the app is closed."""
-         self.book_collection.save_books('books.json')
+    def toggle_book_status(self, instance):
+        index = self.book_buttons.index(instance)
+        book = self.book_collection.books[index]
+        if book.status == 'u':
+            book.mark_completed()
+            instance.text = str(book)
+        else:
+            book.mark_unread()
+            instance.text = str(book)
+        self.update_books_display()
 
+    def add_book(self, instance):
+        title = self.title_input.text
+        author = self.author_input.text
+        try:
+            pages = int(self.pages_input.text)
+            if pages <= 0:
+                self.show_error("The book must have some pages!")
+                return
+        except ValueError:
+            self.show_error("Please enter a valid number")
+            return
+
+        if not title or not author:
+            self.show_error("Please complete all fields.")
+            return
+
+        book = Book(title, author, pages)
+        self.book_collection.add_book(book)
+        self.update_books_display()
+        self.title_input.text = ''
+        self.author_input.text = ''
+        self.pages_input.text = ''
+
+    def show_error(self, message):
+        popup = Popup(title='Error',
+                      content=Label(text=message),
+                      size_hint=(0.6, 0.4))
+        popup.open()
+
+    def on_stop(self):
+        self.book_collection.save_books('books.json')
+        print(f"{len(self.book_collection.books)} books saved to books.json")
 
 if __name__ == '__main__':
     BookApp().run()
-
