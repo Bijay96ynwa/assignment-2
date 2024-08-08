@@ -1,8 +1,18 @@
+"""
+Module: a1_classes.py
+
+This module defines a console-based application for managing a collection of books.
+It uses the Book and BookCollection classes to load, display, add, and update book
+information. The user can interact with the application through a simple text-based menu.
+
+Author: JAYA PRAKASH BIJAYPRAKASH
+Date:7/08/24
+"""
 from book import Book, BookCollection
 
 FILE_NAME = 'books.json'
 
-def main():
+def main():#the main function that runs the book manager application
     print("Books to Read 2.0 by JAYA PRAKASH BIJAYPRAKSH")
     book_collection = BookCollection()
     book_collection.load_books(FILE_NAME)
@@ -24,7 +34,7 @@ def main():
         else:
             print("Invalid menu choice")
 
-def display_books(collection):
+def display_books(collection):#display the list of books in the collection
     print()
     collection.sort_books('author')
     for i, book in enumerate(collection.books):
@@ -38,7 +48,7 @@ def display_books(collection):
         print("No books left to read. Why not add a new book?")
     print()
 
-def add_book(collection):
+def add_book(collection):#add a new book to the collection
     print()
     title = get_non_empty_input('Title: ')
     author = get_non_empty_input('Author: ')
@@ -48,7 +58,7 @@ def add_book(collection):
     print(f"{title} by {author} {pages} pages added.")
     print()
 
-def complete_book(collection):
+def complete_book(collection):#marks as a book completed in the collection
     print()
     unread_books = [book for book in collection.books if book.status == 'u']
     if not unread_books:
@@ -64,13 +74,14 @@ def complete_book(collection):
     print()
 
 def get_non_empty_input(prompt):
+    #prompt the user for non-empty input
     while True:
         response = input(prompt).strip()
         if response:
             return response
         print("Input cannot be blank")
 
-def get_positive_integer(prompt):
+def get_positive_integer(prompt):#prompt the user for a positive integer
     while True:
         try:
             response = int(input(prompt))
@@ -80,7 +91,7 @@ def get_positive_integer(prompt):
         except ValueError:
             print("Invalid input - please enter a valid number")
 
-def get_valid_book_number(prompt, max_number):
+def get_valid_book_number(prompt, max_number):#prompt the user for a valid book number
     while True:
         try:
             response = int(input(prompt))

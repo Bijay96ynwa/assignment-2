@@ -1,3 +1,11 @@
+"""
+Module: main.py
+This module defines the Kivy application for managing a collection of books.it uses
+the book and bookcollection classes to load ,display and update book information. The GUI allows users
+to add new books,mark books as completed or unread and sort books by carious attributes.
+Author: Jaya praksh bijay prakash
+Date: 6/08/24
+"""
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
@@ -9,16 +17,15 @@ from kivy.uix.gridlayout import GridLayout
 from book import Book, BookCollection
 import json
 
-class BookApp(App):
-    def build(self):
+class BookApp(App):#the main Kivy application class for managing books
+    def build(self):#Build the kivy application interface
         self.title = "Book Manager"
         self.book_collection = BookCollection()
         self.book_collection.load_books('books.json')
-
+        #layout setup
         self.main_layout = BoxLayout(orientation='horizontal')
         self.left_layout = BoxLayout(orientation='vertical', size_hint=(0.3, 1))
         self.right_layout = BoxLayout(orientation='vertical', size_hint=(0.7, 1))
-
         self.spinner = Spinner(
             text='Sort by Author',
             values=('author', 'title'),
@@ -26,7 +33,7 @@ class BookApp(App):
         )
         self.spinner.bind(text=self.sort_books)
         self.left_layout.add_widget(self.spinner)
-
+        #input fields and add button
         self.title_input = TextInput(hint_text='Title', size_hint=(1, 0.1))
         self.author_input = TextInput(hint_text='Author', size_hint=(1, 0.1))
         self.pages_input = TextInput(hint_text='Number of pages', size_hint=(1, 0.1))
@@ -37,7 +44,7 @@ class BookApp(App):
         self.left_layout.add_widget(self.author_input)
         self.left_layout.add_widget(self.pages_input)
         self.left_layout.add_widget(self.add_button)
-
+        #Satus label
         self.status_label = Label(text='Number of pages to read:', size_hint=(1, 0.1))
         self.right_layout.add_widget(self.status_label)
 
@@ -47,11 +54,11 @@ class BookApp(App):
 
         return self.main_layout
 
-    def sort_books(self, spinner, text):
+    def sort_books(self, spinner, text):#sort the books based on the selected attribute from the spinner
         self.book_collection.sort_books(text)
         self.update_books_display()
 
-    def update_books_display(self):
+    def update_books_display(self):#update the display of books in the right layout
         self.right_layout.clear_widgets()
         self.right_layout.add_widget(self.status_label)
         self.book_buttons = []
@@ -65,7 +72,7 @@ class BookApp(App):
         unread_count = sum(1 for book in self.book_collection.books if book.status == 'u')
         self.status_label.text = f"You still need to read {unread_pages} pages in {unread_count} books."
 
-    def toggle_book_status(self, instance):
+    def toggle_book_status(self, instance):#Toggle the status of the book between completed and unread
         index = self.book_buttons.index(instance)
         book = self.book_collection.books[index]
         if book.status == 'u':
@@ -76,7 +83,7 @@ class BookApp(App):
             instance.text = str(book)
         self.update_books_display()
 
-    def add_book(self, instance):
+    def add_book(self, instance):#add a new book to the collection from the inout field
         title = self.title_input.text
         author = self.author_input.text
         try:
@@ -99,13 +106,13 @@ class BookApp(App):
         self.author_input.text = ''
         self.pages_input.text = ''
 
-    def show_error(self, message):
+    def show_error(self, message):#show an error message in a popup
         popup = Popup(title='Error',
                       content=Label(text=message),
                       size_hint=(0.6, 0.4))
         popup.open()
 
-    def on_stop(self):
+    def on_stop(self):#Save the book collection to a JSON file when application stops
         self.book_collection.save_books('books.json')
         print(f"{len(self.book_collection.books)} books saved to books.json")
 
